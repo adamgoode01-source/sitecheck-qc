@@ -1,0 +1,9 @@
+# The macOS CI runner executes these; a CRLF that sneaks in from a Windows
+# checkout breaks shell scripts with errors that name the wrong thing.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
+*.p8 binary
