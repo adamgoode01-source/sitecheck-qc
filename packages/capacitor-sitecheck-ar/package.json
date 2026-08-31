@@ -1,7 +1,7 @@
 {
   "name": "capacitor-sitecheck-ar",
   "version": "0.1.0",
-  "description": "ARKit depth measurement plugin for SiteCheck QC.",
+  "description": "ARKit depth measurement plugin for LiDAR Site Check.",
   "license": "UNLICENSED",
   "private": true,
   "main": "dist/plugin.js",

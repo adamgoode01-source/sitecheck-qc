@@ -1,6 +1,6 @@
 {
   "name": "sitecheck-qc",
-  "productName": "SiteCheck QC",
+  "productName": "LiDAR Site Check",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -45,7 +45,7 @@
   },
   "build": {
     "appId": "com.sitecheck.qc",
-    "productName": "SiteCheck QC",
+    "productName": "LiDAR Site Check",
     "directories": {
       "output": "release"
     },

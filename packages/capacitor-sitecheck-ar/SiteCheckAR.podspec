@@ -8,7 +8,7 @@ Pod::Spec.new do |s|
   s.summary = package['description']
   s.license = package['license']
   s.homepage = 'https://example.invalid/sitecheck'
-  s.author = 'SiteCheck QC'
+  s.author = 'LiDAR Site Check'
   s.source = { :git => 'https://example.invalid/sitecheck.git', :tag => s.version.to_s }
   s.source_files = 'ios/Sources/**/*.{swift,h,m,c,cc,mm,cpp}'
   # ARKit raycasting needs 13.0; sceneReconstruction (the LiDAR path) needs

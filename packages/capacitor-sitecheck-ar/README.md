@@ -1,6 +1,6 @@
 # capacitor-sitecheck-ar
 
-ARKit depth measurement for SiteCheck QC, as a proper Capacitor plugin package.
+ARKit depth measurement for LiDAR Site Check, as a proper Capacitor plugin package.
 
 ## Why it is a package
 

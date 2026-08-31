@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "SiteCheck QC (test shell)",
+    "name": "LiDAR Site Check (test shell)",
     "slug": "sitecheck-qc-shell",
     "version": "0.1.0",
     "orientation": "portrait",

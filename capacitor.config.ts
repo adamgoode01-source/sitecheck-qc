@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.sitecheck.qc',
-  appName: 'SiteCheck QC',
+  appName: 'LiDAR Site Check',
   webDir: 'dist',
   ios: {
     contentInset: 'always',

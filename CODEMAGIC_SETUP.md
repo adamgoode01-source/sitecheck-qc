@@ -28,7 +28,7 @@ Profiles** → **Identifiers** → **+**
 
 1. **Register a new identifier** → **App IDs** → Continue
 2. Type: **App** (not App Clip) → Continue
-3. **Description**: `SiteCheck QC` — internal label only. No punctuation or
+3. **Description**: `LiDAR Site Check` — internal label only. No punctuation or
    emoji; Apple rejects them here.
 4. **Bundle ID**: choose **Explicit**, not Wildcard. Wildcard IDs cannot be
    used for App Store or TestFlight distribution. Enter exactly:
@@ -64,7 +64,7 @@ is unrelated to Apple. `expo-app/app.json` is the throwaway test shell.)
 
 - **Platform**: iOS
 - **Name**: this is the public App Store name and it is **globally unique**,
-  even for an app that never leaves TestFlight. "SiteCheck QC" may well be
+  even for an app that never leaves TestFlight. "LiDAR Site Check" may well be
   taken; if so, add a company or client word. It can be changed later, right
   up until first public release.
 - **Primary Language**, then **Bundle ID**: pick the one you just registered

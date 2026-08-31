@@ -1,4 +1,4 @@
-# SiteCheck QC
+# LiDAR Site Check
 
 Field quality control for framing and reinforcing steel. Measure the work in 3D
 on an iPhone, compare it against dimensions taken off the contract drawings,

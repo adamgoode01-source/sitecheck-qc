@@ -1,4 +1,4 @@
-# Getting SiteCheck QC onto TestFlight
+# Getting LiDAR Site Check onto TestFlight
 
 ## Ship the Capacitor app, not the Expo shell
 

@@ -1,5 +1,5 @@
 /**
- * SiteCheck QC — Expo Go test shell.
+ * LiDAR Site Check — Expo Go test shell.
  *
  * ---------------------------------------------------------------------------
  * WHAT THIS IS
@@ -263,7 +263,7 @@ function SetupScreen({
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView contentContainerStyle={styles.setup} keyboardShouldPersistTaps="handled">
-          <Text style={styles.title}>SiteCheck QC</Text>
+          <Text style={styles.title}>LiDAR Site Check</Text>
           <Text style={styles.subtitle}>Expo Go test shell</Text>
 
           <Text style={styles.label}>Dev server address</Text>

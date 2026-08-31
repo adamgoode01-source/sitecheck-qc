@@ -1,4 +1,4 @@
-# SiteCheck QC — Expo Go test shell
+# LiDAR Site Check — Expo Go test shell
 
 A thin WebView wrapper around the real app, so it can be launched from Expo Go
 on an iPhone without a Mac and without a build.

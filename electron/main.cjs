@@ -24,7 +24,7 @@ function createWindow() {
     minWidth: 900,
     minHeight: 640,
     backgroundColor: '#f6f7f9',
-    title: 'SiteCheck QC',
+    title: 'LiDAR Site Check',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,

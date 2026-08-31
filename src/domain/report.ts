@@ -135,7 +135,7 @@ ${renderPhotos(input.photos)}
   </p>
 </section>
 
-<footer class="foot">Generated ${esc(formatDateTime(new Date()))} &middot; SiteCheck QC</footer>
+<footer class="foot">Generated ${esc(formatDateTime(new Date()))} &middot; LiDAR Site Check</footer>
 </body>
 </html>`;
 }
