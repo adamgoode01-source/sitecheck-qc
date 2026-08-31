@@ -1,0 +1,575 @@
+/*
+ * Field-first styling.
+ *
+ * Two constraints drive everything here. The phone is used outdoors in
+ * gloves: touch targets are 44px minimum and the palette is high contrast so
+ * it survives direct sun. The desktop is used for review: the same components
+ * simply get more room rather than a separate design.
+ *
+ * Dark mode follows the system, because a phone in a dark mechanical room and
+ * a phone on a sunlit deck are the same phone twenty minutes apart.
+ */
+
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #eef1f5;
+  --ink: #14181d;
+  --muted: #5b6672;
+  --line: #d3dae2;
+  --accent: #1558d6;
+  --accent-ink: #ffffff;
+  --bad: #b3261e;
+  --bad-bg: #fbe9e7;
+  --warn: #8a5a00;
+  --warn-bg: #fdf1dc;
+  --good: #0f6b3f;
+  --good-bg: #e6f4ec;
+  --radius: 10px;
+  --tap: 44px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1216;
+    --surface: #171c22;
+    --surface-2: #1f262e;
+    --ink: #e9eef4;
+    --muted: #9aa7b4;
+    --line: #2b333c;
+    --accent: #6ea8ff;
+    --accent-ink: #0b0e12;
+    --bad: #ff8a80;
+    --bad-bg: #3a1f1d;
+    --warn: #ffc46b;
+    --warn-bg: #3a2f18;
+    --good: #78d9a6;
+    --good-bg: #16301f;
+  }
+}
+
+/*
+ * Sunlight mode — for reading the screen in direct sun.
+ *
+ * Deliberately declared after the dark-mode block so it wins regardless of
+ * the system setting: a dark screen outdoors is close to worst case, because
+ * the glass reflects ambient light and no phone display out-shines the sun.
+ *
+ * The changes are not decoration. Secondary text goes from 5.8:1 to about
+ * 17:1, status pills become solid instead of pastel tints, text is larger and
+ * heavier, and rules are thick enough to survive glare. It gives up
+ * refinement on purpose — this is the palette you want while squinting.
+ */
+:root[data-display='sun'] {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #e4e6e9;
+  --ink: #000000;
+  --muted: #1c1c1c;
+  --line: #000000;
+  --accent: #00308f;
+  --accent-ink: #ffffff;
+  --bad: #a10000;
+  --bad-bg: #ffdedc;
+  --warn: #5c3200;
+  --warn-bg: #ffe9c4;
+  --good: #004d27;
+  --good-bg: #d6f0e0;
+  --tap: 52px;
+}
+
+:root[data-display='sun'] body {
+  font-size: 17px;
+  font-weight: 500;
+}
+
+:root[data-display='sun'] .muted,
+:root[data-display='sun'] .hint,
+:root[data-display='sun'] label.field > span,
+:root[data-display='sun'] table.metrics th {
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+:root[data-display='sun'] .card,
+:root[data-display='sun'] input,
+:root[data-display='sun'] select,
+:root[data-display='sun'] textarea,
+:root[data-display='sun'] button,
+:root[data-display='sun'] .btn {
+  border-width: 2px;
+}
+
+:root[data-display='sun'] .topbar {
+  border-bottom-width: 3px;
+}
+
+/* Solid blocks read at a glance; tinted pastels wash out completely. */
+:root[data-display='sun'] .pill {
+  font-size: 13px;
+  border: 2px solid currentColor;
+}
+
+:root[data-display='sun'] .pill.pass {
+  background: var(--good);
+  color: #ffffff;
+}
+
+:root[data-display='sun'] .pill.fail {
+  background: var(--bad);
+  color: #ffffff;
+}
+
+:root[data-display='sun'] .pill.invalid,
+:root[data-display='sun'] .pill.draft {
+  background: var(--warn);
+  color: #ffffff;
+}
+
+:root[data-display='sun'] li.finding {
+  border-left-width: 8px;
+  background: #ffffff;
+  border-top: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+:root[data-display='sun'] li.finding p {
+  color: var(--ink);
+}
+
+:root[data-display='sun'] .banner {
+  border-width: 2px;
+  font-weight: 600;
+}
+
+/* The one-tap toggle itself, lit while active. */
+.sun-toggle {
+  min-width: var(--tap);
+  padding: 0 12px;
+  font-size: 18px;
+  line-height: 1;
+}
+
+:root[data-display='sun'] .sun-toggle {
+  background: #ffd400;
+  border-color: #000000;
+  color: #000000;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+/* Safe-area padding so the header clears the iPhone notch. */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: max(env(safe-area-inset-top), 10px) 16px 10px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar h1 {
+  font-size: 17px;
+  margin: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.main {
+  flex: 1;
+  padding: 16px;
+  padding-bottom: max(env(safe-area-inset-bottom), 24px);
+  max-width: 940px;
+  width: 100%;
+  margin-inline: auto;
+}
+
+h2 {
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin: 24px 0 8px;
+}
+
+h3 {
+  font-size: 16px;
+  margin: 0 0 4px;
+}
+
+p {
+  margin: 0 0 10px;
+}
+
+a {
+  color: var(--accent);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 10px;
+}
+
+.card.tappable {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  min-height: var(--tap);
+}
+
+.card.tappable:active {
+  background: var(--surface-2);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.row.between {
+  justify-content: space-between;
+}
+
+.grow {
+  flex: 1;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.mono {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Buttons ------------------------------------------------------------ */
+
+button,
+.btn {
+  min-height: var(--tap);
+  padding: 0 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+button.primary,
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+button.danger {
+  color: var(--bad);
+  border-color: var(--bad);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/*
+ * A row of equal actions that must not wrap into an orphan.
+ *
+ * Flex-wrap gave 3 buttons on one line and the fourth stretched full width
+ * underneath, which reads as a broken layout. A grid keeps them even: two
+ * across on a phone, four on a desktop, all the same width whatever the label
+ * length.
+ */
+.grid-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.grid-actions > * {
+  width: 100%;
+}
+
+/*
+ * Preset value chips. Same reasoning as .grid-actions but sized for short
+ * numeric labels, so a handful of them form tidy columns rather than a ragged
+ * block of differently-sized buttons wrapped over four lines.
+ */
+.grid-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.grid-chips > * {
+  width: 100%;
+  padding: 0 8px;
+}
+
+/* Forms -------------------------------------------------------------- */
+
+label.field {
+  display: block;
+  margin-bottom: 12px;
+}
+
+label.field > span {
+  display: block;
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 16px; /* 16px prevents iOS Safari zooming the page on focus. */
+}
+
+textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.hint {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* Status ------------------------------------------------------------- */
+
+.pill {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+
+.pill.pass {
+  background: var(--good-bg);
+  color: var(--good);
+}
+
+.pill.fail {
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+
+.pill.invalid,
+.pill.draft {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+.banner {
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  border: 1px solid transparent;
+}
+
+.banner.warn {
+  background: var(--warn-bg);
+  color: var(--warn);
+  border-color: currentColor;
+}
+
+.banner.bad {
+  background: var(--bad-bg);
+  color: var(--bad);
+  border-color: currentColor;
+}
+
+.banner.info {
+  background: var(--surface-2);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+/* Metrics & findings -------------------------------------------------- */
+
+table.metrics {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table.metrics th {
+  text-align: left;
+  font-weight: 400;
+  color: var(--muted);
+  padding: 6px 0;
+  font-size: 14px;
+}
+
+table.metrics td {
+  text-align: right;
+  padding: 6px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+table.metrics td.bad {
+  color: var(--bad);
+  font-weight: 700;
+}
+
+table.metrics td.good {
+  color: var(--good);
+}
+
+ul.findings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+li.finding {
+  border-left: 4px solid var(--line);
+  background: var(--surface-2);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 10px 12px;
+}
+
+li.finding.deficiency {
+  border-left-color: var(--bad);
+}
+
+li.finding.observation,
+li.finding.invalid {
+  border-left-color: var(--warn);
+}
+
+li.finding.pass {
+  border-left-color: var(--good);
+}
+
+li.finding p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* Run diagram --------------------------------------------------------- */
+
+.run {
+  position: relative;
+  height: 84px;
+  background: var(--surface-2);
+  border-radius: var(--radius);
+  margin: 12px 0;
+  overflow: hidden;
+}
+
+.run .member {
+  position: absolute;
+  top: 14px;
+  width: 3px;
+  height: 40px;
+  background: var(--good);
+  transform: translateX(-50%);
+}
+
+.run .member.bad {
+  background: var(--bad);
+  width: 5px;
+}
+
+.run .bay-label {
+  position: absolute;
+  bottom: 6px;
+  font-size: 11px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.run .bay-label.bad {
+  color: var(--bad);
+  font-weight: 700;
+}
+
+/* Plan canvas --------------------------------------------------------- */
+
+.plan-stage {
+  position: relative;
+  overflow: auto;
+  max-height: 62vh;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  touch-action: pan-x pan-y;
+}
+
+.plan-stage canvas {
+  display: block;
+}
+
+.plan-overlay {
+  position: absolute;
+  inset: 0;
+  cursor: crosshair;
+}
+
+.empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 40px 16px;
+}

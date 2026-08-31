@@ -1,0 +1,20 @@
+{
+  "name": "capacitor-sitecheck-ar",
+  "version": "0.1.0",
+  "description": "ARKit depth measurement plugin for SiteCheck QC.",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "dist/plugin.js",
+  "capacitor": {
+    "ios": {
+      "src": "ios"
+    }
+  },
+  "files": [
+    "ios/",
+    "SiteCheckAR.podspec"
+  ],
+  "peerDependencies": {
+    "@capacitor/core": "^6.0.0"
+  }
+}

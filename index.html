@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>SiteCheck QC</title>
+    <script>
+      // Applied before first paint so switching to sunlight mode does not
+      // flash the dark palette on the way in — which, outdoors, is exactly
+      // the moment the screen becomes unreadable.
+      try {
+        if (localStorage.getItem('sitecheck.display') === 'sun') {
+          document.documentElement.setAttribute('data-display', 'sun');
+        }
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
