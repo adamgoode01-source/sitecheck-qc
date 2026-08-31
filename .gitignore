@@ -21,3 +21,15 @@ expo-app/.expo-export-check/
 
 *.log
 .DS_Store
+
+# Signing credentials. The App Store Connect .p8 can publish to your Apple
+# account, downloads exactly once, and cannot be revoked quietly — committing
+# one to a repo is a genuine incident. Keep them out of the working tree
+# entirely; this is a backstop, not a filing system.
+*.p8
+*.p12
+*.cer
+*.pem
+*.mobileprovision
+.env
+.env.*
