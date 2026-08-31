@@ -21,21 +21,62 @@ git push -u origin main
 Private is fine. Codemagic connects through OAuth, so you never paste
 credentials into the config.
 
-## 2. Register the bundle id and create the app record
+## 2a. Register the bundle id
 
-In your Apple Developer account, under **Certificates, Identifiers &
-Profiles → Identifiers**, register:
+<https://developer.apple.com/account> → **Certificates, Identifiers &
+Profiles** → **Identifiers** → **+**
 
-```
-com.sitecheck.qc
-```
+1. **Register a new identifier** → **App IDs** → Continue
+2. Type: **App** (not App Clip) → Continue
+3. **Description**: `SiteCheck QC` — internal label only. No punctuation or
+   emoji; Apple rejects them here.
+4. **Bundle ID**: choose **Explicit**, not Wildcard. Wildcard IDs cannot be
+   used for App Store or TestFlight distribution. Enter exactly:
 
-If that identifier is taken, change `appId` in `capacitor.config.ts` and both
-`BUNDLE_ID` and `bundle_identifier` in `codemagic.yaml` to match — they must
-agree or signing fails late, after the archive has already run.
+   ```
+   com.sitecheck.qc
+   ```
 
-Then in **App Store Connect → My Apps → +**, create the app record against
-that bundle id. TestFlight has nothing to upload into until this exists.
+5. **Capabilities: leave everything unchecked.** This surprises people, but
+   neither ARKit nor the camera is an entitlement — they are gated by
+   `Info.plist` usage strings and device support, not by a capability. The app
+   has no push, no iCloud, no App Groups, no sign-in. Ticking things you do
+   not use invites review questions and can break signing.
+6. Continue → **Register**
+
+Bundle IDs are unique across all of Apple, so `com.sitecheck.qc` may be taken.
+If it is, pick something you control — reverse-DNS of your own domain is the
+convention — and change it in **three** places, which must agree or signing
+fails late, after the archive has already run:
+
+| File | Field |
+|---|---|
+| `capacitor.config.ts` | `appId` |
+| `codemagic.yaml` | `BUNDLE_ID` |
+| `codemagic.yaml` | `ios_signing.bundle_identifier` |
+
+(`package.json` → `build.appId` is electron-builder's Windows identifier and
+is unrelated to Apple. `expo-app/app.json` is the throwaway test shell.)
+
+## 2b. Create the App Store Connect record
+
+<https://appstoreconnect.apple.com> → **My Apps** → **+** → **New App**
+
+- **Platform**: iOS
+- **Name**: this is the public App Store name and it is **globally unique**,
+  even for an app that never leaves TestFlight. "SiteCheck QC" may well be
+  taken; if so, add a company or client word. It can be changed later, right
+  up until first public release.
+- **Primary Language**, then **Bundle ID**: pick the one you just registered
+  from the dropdown. If it is missing, the registration in 2a did not go
+  through.
+- **SKU**: any private string you like — `sitecheck-qc-001`. Never shown to
+  anyone.
+- **User Access**: Full Access
+
+TestFlight has nowhere to put a build until this record exists. The upload
+will succeed and then publishing will fail, which is a confusing way to find
+out.
 
 ## 3. Create an App Store Connect API key
 
