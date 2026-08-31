@@ -42,7 +42,7 @@ Apple does not permit iOS builds from Windows. Two routes:
 | Route | Mac needed | Notes |
 |---|---|---|
 | **Xcode on a Mac** | yes | Borrowed, bought, or rented (MacinCloud, MacStadium, AWS EC2 Mac). Most direct, and the only route that also gives free 7-day provisioning for the calibration study *before* you pay the $99. |
-| **Cloud CI** | no | [`codemagic.yaml`](codemagic.yaml) in the repo root is ready to run — it generates the iOS project, patches the plist, bumps the build number, archives and uploads to TestFlight. Ionic Appflow and Bitrise also work; GitHub Actions with a `macos-latest` runner works too but you manage certificates yourself. |
+| **Cloud CI** | no | [`codemagic.yaml`](codemagic.yaml) is written and validated — it generates the iOS project, raises the deployment target, patches the plist, bumps the build number, archives and uploads to TestFlight. Account setup in [CODEMAGIC_SETUP.md](CODEMAGIC_SETUP.md). Ionic Appflow and Bitrise also work; GitHub Actions with a `macos-latest` runner works too but you manage certificates yourself. |
 
 **If you have no Mac at all, you must pay the $99 before you can calibrate**,
 because CI builds can only reach a device through ad-hoc or TestFlight
