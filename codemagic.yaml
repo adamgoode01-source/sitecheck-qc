@@ -15,8 +15,8 @@
 #   2. App Store Connect > Users and Access > Integrations > App Store Connect
 #      API: create a key with the "App Manager" role. Download the .p8 once —
 #      Apple will not show it again.
-#   3. Codemagic > Teams > Integrations > Developer Portal: add that key and
-#      name it exactly `sitecheck_asc` (or change the name below to match).
+#   3. Codemagic > your app > Environment variables: add the key as three
+#      variables in a group named `appstore`. See CODEMAGIC_SETUP.md step 4.
 #   4. Register the bundle id `com.sitecheck.qc` in your Apple Developer
 #      account, and create the matching app record in App Store Connect.
 #   5. Push a tag starting with `ios-v` to trigger a build:
@@ -35,14 +35,23 @@ workflows:
     instance_type: mac_mini_m2
     max_build_duration: 60
 
-    integrations:
-      # Must match the name you gave the key in Codemagic.
-      app_store_connect: sitecheck_asc
+    # No `integrations:` block on purpose.
+    #
+    # A named integration has to match a string in Codemagic's UI exactly AND
+    # be enabled on this specific app; when either is off, the build dies with
+    # `App Store Connect integration "..." does not exist`, which does not say
+    # which of the two is wrong. The App Store Connect CLI reads its
+    # credentials straight from environment variables instead, so there is one
+    # place to get right rather than two.
 
     environment:
       node: 20
       xcode: latest
       cocoapods: default
+      groups:
+        # Create this group in Codemagic with exactly these three variables —
+        # see CODEMAGIC_SETUP.md. The group name must match this string.
+        - appstore
       vars:
         BUNDLE_ID: 'com.sitecheck.qc'
         XCODE_WORKSPACE: 'ios/App/App.xcworkspace'
@@ -151,6 +160,19 @@ workflows:
 
       - name: Set up code signing
         script: |
+          # Fail here with a readable message rather than fifty lines into a
+          # signing tool that reports a missing credential as "not found".
+          for v in APP_STORE_CONNECT_ISSUER_ID APP_STORE_CONNECT_KEY_IDENTIFIER APP_STORE_CONNECT_PRIVATE_KEY; do
+            eval "value=\$$v"
+            if [ -z "$value" ]; then
+              echo "MISSING: $v is not set."
+              echo "Add it to the Codemagic variable group named 'appstore'."
+              echo "See CODEMAGIC_SETUP.md step 4."
+              exit 1
+            fi
+          done
+          echo "App Store Connect credentials present."
+
           keychain initialize
 
           # --create is the whole point. It makes the App Store provisioning
@@ -180,7 +202,10 @@ workflows:
 
     publishing:
       app_store_connect:
-        auth: integration
+        # Same credentials as the signing step, from the `appstore` group.
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         # Internal testers only: no Beta App Review, available as soon as
         # processing finishes. Add external groups once the tool has been
         # calibrated and you know what it can honestly claim.

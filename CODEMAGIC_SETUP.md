@@ -88,18 +88,34 @@ API → +**
   this step again.
 - Note the **Issuer ID** and the **Key ID** from the same page.
 
-## 4. Add the key to Codemagic
+## 4. Add the credentials to Codemagic as a variable group
 
-**Codemagic → Teams → Integrations → Developer Portal → Add key**
+Not as a "Developer Portal integration". That route needs a name to match
+exactly *and* the integration to be enabled on the specific app, and when
+either is wrong the build fails with `App Store Connect integration "..."
+does not exist` — which does not tell you which of the two it is. Environment
+variables have one place to get right instead of two.
 
-Upload the `.p8`, paste the Issuer ID and Key ID, and name it exactly:
+In Codemagic, open your app → **Environment variables** (on the app's settings
+page, alongside the build configuration).
 
-```
-sitecheck_asc
-```
+Create **three** variables, all in a group named exactly `appstore`:
 
-That name is referenced in `codemagic.yaml` under `integrations`. If you name
-it something else, change it there too.
+| Variable name | Value | Secure |
+|---|---|---|
+| `APP_STORE_CONNECT_ISSUER_ID` | Issuer ID (a UUID) | yes |
+| `APP_STORE_CONNECT_KEY_IDENTIFIER` | Key ID (~10 characters) | yes |
+| `APP_STORE_CONNECT_PRIVATE_KEY` | **the entire contents** of the `.p8` file | yes |
+
+For the private key, open the `.p8` in a text editor and paste everything,
+including the `-----BEGIN PRIVATE KEY-----` and `-----END PRIVATE KEY-----`
+lines. Multi-line values are fine. Tick **Secure** on all three so they are
+masked in logs.
+
+The variable names and the group name are both matched literally by
+`codemagic.yaml`. The workflow checks all three are present before it touches
+any signing tool, so a missing one fails in seconds with a message naming it,
+rather than deep inside a signing error.
 
 ## 5. Add the app in Codemagic and trigger a build
 
