@@ -13,6 +13,22 @@ drag and nothing to remember. Capacitor finds it because the root
 `package.json` depends on it and this `package.json` declares a `capacitor`
 field.
 
+## Three different names, none interchangeable
+
+This trips people up, so it is worth stating once:
+
+| Name | Where it comes from | Must equal |
+|---|---|---|
+| `capacitor-sitecheck-ar` | npm package name | the `file:` dependency in the root `package.json` |
+| `CapacitorSitecheckAr` | **derived by Capacitor** from the package name | the podspec filename and its `s.name` |
+| `SiteCheckAR` | `@objc(SiteCheckARPlugin)` in Swift | `registerPlugin('SiteCheckAR')` in TypeScript |
+
+The middle one is the trap. Capacitor pascal-cases the hyphenated package
+name and writes `pod 'CapacitorSitecheckAr'` into the generated Podfile, and
+CocoaPods requires the file to be `<s.name>.podspec`. Renaming it to anything
+more readable fails the build with
+`No podspec found for CapacitorSitecheckAr`.
+
 ## Installing
 
 Already wired up. The root project depends on it by path:

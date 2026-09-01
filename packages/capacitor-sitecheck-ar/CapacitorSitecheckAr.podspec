@@ -3,7 +3,20 @@ require 'json'
 package = JSON.parse(File.read(File.join(__dir__, 'package.json')))
 
 Pod::Spec.new do |s|
-  s.name = 'SiteCheckAR'
+  # This name is not a choice, and it is not the plugin's JS name.
+  #
+  # Capacitor derives the pod name from the npm package name by pascal-casing
+  # the hyphenated segments: capacitor-sitecheck-ar -> CapacitorSitecheckAr.
+  # It writes that into the generated Podfile, and CocoaPods requires the
+  # podspec file to be named <s.name>.podspec. Tidying this to SiteCheckAR
+  # breaks the build with:
+  #
+  #   [!] No podspec found for `CapacitorSitecheckAr` in
+  #       `../../packages/capacitor-sitecheck-ar`
+  #
+  # The JS side is unrelated: registerPlugin('SiteCheckAR') matches the
+  # @objc(SiteCheckARPlugin) class, not this.
+  s.name = 'CapacitorSitecheckAr'
   s.version = package['version']
   s.summary = package['description']
   s.license = package['license']
