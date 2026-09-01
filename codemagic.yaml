@@ -162,9 +162,18 @@ workflows:
         # calibrated and you know what it can honestly claim.
         submit_to_testflight: true
 
-      email:
-        recipients:
-          - adamgoode01@gmail.com
-        notify:
-          success: true
-          failure: true
+      # No email block on purpose: this repo is public, and a hard-coded
+      # address here is scrapeable by anyone.
+      #
+      # To get build notifications, create a variable group in Codemagic
+      # holding NOTIFY_EMAIL, add `groups: [notifications]` under
+      # `environment`, and restore:
+      #
+      #   email:
+      #     recipients:
+      #       - $NOTIFY_EMAIL
+      #     notify: { success: true, failure: true }
+      #
+      # Left out rather than wired up because referencing a group that does
+      # not exist yet fails the build outright — a bad trade for a
+      # notification while you are still getting the first one green.
