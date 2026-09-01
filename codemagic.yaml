@@ -207,7 +207,7 @@ workflows:
         script: |
           # Fail here with a readable message rather than fifty lines into a
           # signing tool that reports a missing credential as "not found".
-          for v in APP_STORE_CONNECT_ISSUER_ID APP_STORE_CONNECT_KEY_IDENTIFIER APP_STORE_CONNECT_PRIVATE_KEY; do
+          for v in APP_STORE_CONNECT_ISSUER_ID APP_STORE_CONNECT_KEY_IDENTIFIER APP_STORE_CONNECT_PRIVATE_KEY CERTIFICATE_PRIVATE_KEY; do
             eval "value=\$$v"
             if [ -z "$value" ]; then
               echo "MISSING: $v is not set."
@@ -228,11 +228,26 @@ workflows:
           # Apple allows three distribution certificates per account. If this
           # errors saying the limit is reached, revoke an unused one in
           # Certificates, Identifiers & Profiles rather than creating another.
+          # --certificate-key is not optional here, despite reading like it.
+          # A distribution certificate is a public key signed by Apple; the
+          # matching PRIVATE key never leaves your side, so Apple cannot
+          # supply it and --create has nothing to bind the certificate to.
+          # Without it the CLI says "Cannot save Signing Certificates without
+          # certificate private key", creates no profile, and still exits 0.
+          #
+          # The same key must be reused on every build. Generating a fresh one
+          # each time creates a new distribution certificate each time, and
+          # Apple allows three per account — three builds and you are locked
+          # out until you revoke some.
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
+            --certificate-key="@env:CERTIFICATE_PRIVATE_KEY" \
             --create
 
-          keychain add-certificates
+          # Pass the same key here: without it, the certificate fetched above
+          # cannot be written into the keychain, and the archive later fails
+          # for want of a signing identity.
+          keychain add-certificates --certificate-key="@env:CERTIFICATE_PRIVATE_KEY"
 
           echo "=== provisioning profiles on disk ==="
           PROFILE_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
