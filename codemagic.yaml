@@ -236,13 +236,26 @@ workflows:
           CERT_KEY_FILE="$CM_BUILD_DIR/cert_key.pem"
           echo "$CERTIFICATE_PRIVATE_KEY" | base64 --decode > "$CERT_KEY_FILE" 2>/dev/null || true
 
-          if ! head -1 "$CERT_KEY_FILE" 2>/dev/null | grep -q "BEGIN RSA PRIVATE KEY"; then
-            echo "FATAL: CERTIFICATE_PRIVATE_KEY did not decode to a PKCS#1 RSA key."
-            echo "  first line after decoding: $(head -1 "$CERT_KEY_FILE" 2>/dev/null | tr -d '\r')"
-            echo "  expected: -----BEGIN RSA PRIVATE KEY-----"
+          # Exact match, not a substring. `grep -q "BEGIN RSA PRIVATE KEY"`
+          # happily passes on `<binary junk>-----BEGIN RSA PRIVATE KEY-----`,
+          # which is precisely what a base64 value pasted on top of an
+          # uncleared field decodes to — extra leading characters produce
+          # garbage bytes and then resync.
+          FIRST_LINE="$(head -1 "$CERT_KEY_FILE" 2>/dev/null | tr -d '\r')"
+          if [ "$FIRST_LINE" != "-----BEGIN RSA PRIVATE KEY-----" ]; then
+            echo "FATAL: CERTIFICATE_PRIVATE_KEY did not decode to a clean PKCS#1 RSA key."
+            echo "  expected first line: -----BEGIN RSA PRIVATE KEY-----"
+            echo "  got ${#FIRST_LINE} characters, ending: ...$(printf '%s' "$FIRST_LINE" | tail -c 32)"
             echo
-            echo "The variable must hold the BASE64 of signing_key.pem, not the PEM itself."
-            echo "See CODEMAGIC_SETUP.md step 4."
+            echo "If that ends correctly but is too long, the variable has extra"
+            echo "characters in front of it — clear the field completely in"
+            echo "Codemagic and paste again. See CODEMAGIC_SETUP.md step 4."
+            exit 1
+          fi
+
+          # Definitive check: does OpenSSL accept it as a key at all.
+          if ! openssl rsa -in "$CERT_KEY_FILE" -check -noout >/dev/null 2>&1; then
+            echo "FATAL: the decoded key is not a usable RSA private key."
             exit 1
           fi
           echo "Certificate private key decoded and looks like PKCS#1."
@@ -266,10 +279,22 @@ workflows:
           # each time creates a new distribution certificate each time, and
           # Apple allows three per account — three builds and you are locked
           # out until you revoke some.
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --certificate-key="@env:CERT_KEY_PEM" \
-            --create
+          # Output is captured and scrubbed rather than streamed. On a bad
+          # value this command echoes the ENTIRE private key back into the
+          # build log — CERT_KEY_PEM is created here, so Codemagic has no way
+          # to know it is a secret and does not mask it. A failed build should
+          # not burn a signing key.
+          if ! app-store-connect fetch-signing-files "$BUNDLE_ID" \
+                 --type IOS_APP_STORE \
+                 --certificate-key="@env:CERT_KEY_PEM" \
+                 --create > "$CM_BUILD_DIR/asc.log" 2>&1; then
+            echo "fetch-signing-files failed. Output, with any key material removed:"
+            sed -e '/BEGIN [A-Z ]*PRIVATE KEY/,/END [A-Z ]*PRIVATE KEY/d' \
+                "$CM_BUILD_DIR/asc.log" | tail -30
+            rm -f "$CM_BUILD_DIR/asc.log" "$CERT_KEY_FILE"
+            exit 1
+          fi
+          rm -f "$CM_BUILD_DIR/asc.log"
 
           # No --certificate-key here: `keychain add-certificates` does not
           # accept one. It picks up the .p12 that fetch-signing-files already
@@ -292,6 +317,11 @@ workflows:
           # project leaves the App target unsigned. That surfaces much later as
           # `"App" requires a provisioning profile` during archive, which reads
           # like the profile was never fetched at all.
+          # The decoded key has served its purpose; do not leave it on disk
+          # for the rest of the build.
+          rm -f "$CERT_KEY_FILE"
+          unset CERT_KEY_PEM
+
           xcode-project use-profiles --project "ios/App/App.xcodeproj"
 
           echo "=== signing settings now on the App target ==="
