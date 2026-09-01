@@ -48,9 +48,15 @@ workflows:
         XCODE_WORKSPACE: 'ios/App/App.xcworkspace'
         XCODE_SCHEME: 'App'
         IOS_DEPLOYMENT_TARGET: *ios_deployment_target
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.sitecheck.qc
+      # No `ios_signing:` block here on purpose.
+      #
+      # That block is Codemagic's automatic signing, and it only FETCHES
+      # provisioning profiles that already exist. A bundle id that has never
+      # been built has nothing to fetch, and the build dies with
+      # "No matching profiles found for bundle identifier ... and distribution
+      # type app_store" — which reads like the bundle id is wrong when in fact
+      # it is simply new. Signing is done explicitly in the scripts below so
+      # the profile can be created on first run.
 
     triggering:
       events:
@@ -143,9 +149,27 @@ workflows:
           cd ios/App
           pod install
 
+      - name: Set up code signing
+        script: |
+          keychain initialize
+
+          # --create is the whole point. It makes the App Store provisioning
+          # profile, and a distribution certificate if the account has none,
+          # through the App Store Connect API. Without it this only looks for
+          # profiles that already exist and fails on a brand-new bundle id.
+          #
+          # Apple allows three distribution certificates per account. If this
+          # errors saying the limit is reached, revoke an unused one in
+          # Certificates, Identifiers & Profiles rather than creating another.
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+
+          keychain add-certificates
+          xcode-project use-profiles
+
       - name: Build the IPA
         script: |
-          xcode-project use-profiles
           xcode-project build-ipa \
             --workspace "$XCODE_WORKSPACE" \
             --scheme "$XCODE_SCHEME"
