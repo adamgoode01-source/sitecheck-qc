@@ -228,8 +228,24 @@ workflows:
           echo "  key id:    $KEY_ID_LEN characters (expect 10)"
           echo "  issuer id: $ISSUER_LEN characters (expect 36)"
 
+          # Shape, not content: letters and digits become X, everything else
+          # stays visible. Reveals stray quotes, spaces, an AuthKey_ prefix or
+          # a .p8 suffix without printing the value — and because it does not
+          # match the stored secret, Codemagic does not mask it away.
+          shape() { printf '%s' "$1" | sed -e 's/[A-Za-z0-9]/X/g'; }
+          echo "  key id shape:    [$(shape "$APP_STORE_CONNECT_KEY_IDENTIFIER")]"
+          echo "  issuer id shape: [$(shape "$APP_STORE_CONNECT_ISSUER_ID")]"
+          echo "  (a good key id is [XXXXXXXXXX]; a good issuer id is"
+          echo "   [XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX])"
+
           if [ "$KEY_ID_LEN" -ne 10 ]; then
             echo "FATAL: APP_STORE_CONNECT_KEY_IDENTIFIER should be exactly 10 characters."
+            if [ "$KEY_ID_LEN" -eq 18 ]; then
+              echo
+              echo "18 characters is AuthKey_ plus the key id. The downloaded file is"
+              echo "named AuthKey_<KEYID>.p8 — the key id is only the part between"
+              echo "the underscore and the .p8, with no prefix and no extension."
+            fi
             echo "Found on the key's row in App Store Connect > Users and Access >"
             echo "Integrations > App Store Connect API."
             exit 1
@@ -237,7 +253,10 @@ workflows:
 
           if [ "$ISSUER_LEN" -ne 36 ]; then
             echo "FATAL: APP_STORE_CONNECT_ISSUER_ID should be a 36-character UUID."
-            echo "It is shown once at the top of that same page, not per key."
+            echo
+            echo "It is NOT derived from the key or its filename. It identifies the"
+            echo "whole team, is shown once at the top of that same page above the"
+            echo "list of keys, and looks like 1a2b3c4d-5e6f-7890-abcd-ef1234567890."
             exit 1
           fi
 

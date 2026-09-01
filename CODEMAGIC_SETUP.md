@@ -103,10 +103,29 @@ Create **four** variables, all in a group named exactly `appstore`:
 
 | Variable name | Value | Secure |
 |---|---|---|
-| `APP_STORE_CONNECT_ISSUER_ID` | Issuer ID (a UUID) | yes |
-| `APP_STORE_CONNECT_KEY_IDENTIFIER` | Key ID (~10 characters) | yes |
+| `APP_STORE_CONNECT_ISSUER_ID` | Issuer ID — 36-char UUID | yes |
+| `APP_STORE_CONNECT_KEY_IDENTIFIER` | Key ID — exactly 10 characters | yes |
 | `APP_STORE_CONNECT_PRIVATE_KEY` | **the entire contents** of the `.p8` file | yes |
 | `CERTIFICATE_PRIVATE_KEY` | contents of `signing_key_base64.txt` | yes |
+
+### The first two are easy to confuse
+
+They come from the same page but are different things, and Apple answers a
+mix-up with an opaque 401 rather than saying which is wrong.
+
+**Key ID** — exactly 10 characters, on the key's own row. The file downloads
+as `AuthKey_XXXXXXXXXX.p8`, and the Key ID is *only* the part between the
+underscore and the extension. `AuthKey_XXXXXXXXXX` is 18 characters and is
+wrong.
+
+**Issuer ID** — a 36-character UUID like
+`1a2b3c4d-5e6f-7890-abcd-ef1234567890`. It identifies the whole team, is shown
+**once at the top of the page** above the list of keys, and has nothing to do
+with any individual key or its filename.
+
+The build checks both lengths before it calls Apple, and prints their shape
+with letters and digits replaced by `X`, so a stray prefix or quote is visible
+without exposing the value.
 
 ### The fourth one catches people out
 
