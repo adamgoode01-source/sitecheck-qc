@@ -233,7 +233,30 @@ workflows:
             --create
 
           keychain add-certificates
-          xcode-project use-profiles
+
+          echo "=== provisioning profiles on disk ==="
+          PROFILE_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+          ls -la "$PROFILE_DIR" 2>/dev/null || echo "(no profile directory)"
+          if [ -z "$(ls -A "$PROFILE_DIR" 2>/dev/null)" ]; then
+            echo "FATAL: fetch-signing-files produced no provisioning profile."
+            echo "Nothing later can sign, so stopping here rather than failing"
+            echo "twenty minutes into an archive."
+            exit 1
+          fi
+
+          # Point at the app project explicitly. The default glob is
+          # **/*.xcodeproj, which since pod install also matches
+          # ios/App/Pods/Pods.xcodeproj — and applying the profile to the Pods
+          # project leaves the App target unsigned. That surfaces much later as
+          # `"App" requires a provisioning profile` during archive, which reads
+          # like the profile was never fetched at all.
+          xcode-project use-profiles --project "ios/App/App.xcodeproj"
+
+          echo "=== signing settings now on the App target ==="
+          xcodebuild -workspace "$XCODE_WORKSPACE" -scheme "$XCODE_SCHEME" -showBuildSettings 2>/dev/null \
+            | grep -E "CODE_SIGN_STYLE|CODE_SIGN_IDENTITY|PROVISIONING_PROFILE_SPECIFIER|DEVELOPMENT_TEAM" \
+            | sort -u \
+            || echo "(could not read build settings)"
 
       - name: Build the IPA
         script: |
