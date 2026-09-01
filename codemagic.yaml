@@ -32,7 +32,10 @@ definitions:
 workflows:
   ios-testflight:
     name: LiDAR Site Check — iOS TestFlight
-    instance_type: mac_mini_m2
+    # No explicit instance_type: pinning one your plan does not include leaves
+    # the build queued indefinitely waiting for a machine it will never get,
+    # with no error to read. Letting Codemagic pick its default for the
+    # account avoids that entire failure mode.
     max_build_duration: 60
 
     # No `integrations:` block on purpose.
