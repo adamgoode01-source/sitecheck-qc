@@ -106,7 +106,7 @@ Create **four** variables, all in a group named exactly `appstore`:
 | `APP_STORE_CONNECT_ISSUER_ID` | Issuer ID (a UUID) | yes |
 | `APP_STORE_CONNECT_KEY_IDENTIFIER` | Key ID (~10 characters) | yes |
 | `APP_STORE_CONNECT_PRIVATE_KEY` | **the entire contents** of the `.p8` file | yes |
-| `CERTIFICATE_PRIVATE_KEY` | contents of `signing_key.pem` | yes |
+| `CERTIFICATE_PRIVATE_KEY` | contents of `signing_key_base64.txt` | yes |
 
 ### The fourth one catches people out
 
@@ -123,20 +123,35 @@ Cannot save Signing Certificates without certificate private key
 creates no provisioning profile, and still exits successfully — so the failure
 only appears much later as `"App" requires a provisioning profile`.
 
-Generate one once — **the `-traditional` flag matters**:
+Generate one once. Both flags matter:
 
 ```bash
 openssl genrsa -traditional -out signing_key.pem 2048
 ```
 
-OpenSSL 3 defaults to PKCS#8, which starts `-----BEGIN PRIVATE KEY-----`.
-Codemagic's CLI wants PKCS#1, which starts `-----BEGIN RSA PRIVATE KEY-----`,
-and rejects the other with a message that only says the value "is not valid" —
-the contents are masked in the log, so there is nothing to look at. Check the
-first line says **RSA** before pasting.
+`-traditional` because OpenSSL 3 otherwise emits PKCS#8
+(`-----BEGIN PRIVATE KEY-----`) and the CLI requires PKCS#1
+(`-----BEGIN RSA PRIVATE KEY-----`).
 
-Paste the whole file, `BEGIN`/`END` lines included, into
-`CERTIFICATE_PRIVATE_KEY`.
+Then strip carriage returns and encode it, because OpenSSL on Windows writes
+CRLF and PEM parsers reject it:
+
+```bash
+tr -d '\r' < signing_key.pem > k && mv k signing_key.pem
+```
+
+```bash
+base64 -w 0 signing_key.pem > signing_key_base64.txt
+```
+
+**Paste the base64, not the PEM.** It is a single line with no whitespace and
+no line endings, so nothing a web form or a text editor does can corrupt it in
+transit. The raw PEM failed twice on exactly that, and the only diagnostic
+offered was `Not a valid certificate private key` with the value masked in the
+log — nothing to inspect.
+
+The build decodes it, checks the first line reads `BEGIN RSA PRIVATE KEY`, and
+stops with a specific message if not.
 
 **Reuse the same key for every build.** Generating a fresh one each time
 creates a new distribution certificate each time, and Apple allows three per

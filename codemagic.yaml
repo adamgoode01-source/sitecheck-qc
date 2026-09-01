@@ -228,6 +228,25 @@ workflows:
           # Apple allows three distribution certificates per account. If this
           # errors saying the limit is reached, revoke an unused one in
           # Certificates, Identifiers & Profiles rather than creating another.
+          # The key travels as base64: one line, no whitespace, no line
+          # endings — nothing a web form or a Windows text editor can alter in
+          # transit. The raw PEM was rejected because OpenSSL on Windows wrote
+          # CRLF into it, and the only diagnostic offered was "Not a valid
+          # certificate private key" with the value masked in the log.
+          CERT_KEY_FILE="$CM_BUILD_DIR/cert_key.pem"
+          echo "$CERTIFICATE_PRIVATE_KEY" | base64 --decode > "$CERT_KEY_FILE" 2>/dev/null || true
+
+          if ! head -1 "$CERT_KEY_FILE" 2>/dev/null | grep -q "BEGIN RSA PRIVATE KEY"; then
+            echo "FATAL: CERTIFICATE_PRIVATE_KEY did not decode to a PKCS#1 RSA key."
+            echo "  first line after decoding: $(head -1 "$CERT_KEY_FILE" 2>/dev/null | tr -d '\r')"
+            echo "  expected: -----BEGIN RSA PRIVATE KEY-----"
+            echo
+            echo "The variable must hold the BASE64 of signing_key.pem, not the PEM itself."
+            echo "See CODEMAGIC_SETUP.md step 4."
+            exit 1
+          fi
+          echo "Certificate private key decoded and looks like PKCS#1."
+
           # --certificate-key is not optional here, despite reading like it.
           # A distribution certificate is a public key signed by Apple; the
           # matching PRIVATE key never leaves your side, so Apple cannot
@@ -241,7 +260,7 @@ workflows:
           # out until you revoke some.
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
-            --certificate-key="@env:CERTIFICATE_PRIVATE_KEY" \
+            --certificate-key="@file:$CERT_KEY_FILE" \
             --create
 
           # No --certificate-key here: `keychain add-certificates` does not

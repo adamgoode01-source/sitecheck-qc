@@ -33,3 +33,6 @@ expo-app/.expo-export-check/
 *.mobileprovision
 .env
 .env.*
+
+# Signing key material, in any form.
+signing_key*
