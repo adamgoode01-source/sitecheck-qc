@@ -218,6 +218,41 @@ workflows:
           done
           echo "App Store Connect credentials present."
 
+          # Present is not the same as correct. Apple answers a malformed
+          # issuer id, a wrong key id and a mangled .p8 with the same opaque
+          # 401, so check the shape of each here — Codemagic masks the values
+          # themselves, so lengths and headers are all that can be reported,
+          # and they catch every paste error seen so far.
+          KEY_ID_LEN=${#APP_STORE_CONNECT_KEY_IDENTIFIER}
+          ISSUER_LEN=${#APP_STORE_CONNECT_ISSUER_ID}
+          echo "  key id:    $KEY_ID_LEN characters (expect 10)"
+          echo "  issuer id: $ISSUER_LEN characters (expect 36)"
+
+          if [ "$KEY_ID_LEN" -ne 10 ]; then
+            echo "FATAL: APP_STORE_CONNECT_KEY_IDENTIFIER should be exactly 10 characters."
+            echo "Found on the key's row in App Store Connect > Users and Access >"
+            echo "Integrations > App Store Connect API."
+            exit 1
+          fi
+
+          if [ "$ISSUER_LEN" -ne 36 ]; then
+            echo "FATAL: APP_STORE_CONNECT_ISSUER_ID should be a 36-character UUID."
+            echo "It is shown once at the top of that same page, not per key."
+            exit 1
+          fi
+
+          P8_FIRST="$(printf '%s' "$APP_STORE_CONNECT_PRIVATE_KEY" | head -1 | tr -d '\r')"
+          if [ "$P8_FIRST" != "-----BEGIN PRIVATE KEY-----" ]; then
+            echo "FATAL: APP_STORE_CONNECT_PRIVATE_KEY is not a clean .p8."
+            echo "  expected first line: -----BEGIN PRIVATE KEY-----"
+            echo "  got ${#P8_FIRST} characters"
+            echo "Paste the whole .p8 file including the BEGIN and END lines,"
+            echo "and clear the field first — pasting over an existing value"
+            echo "leaves the old one in front."
+            exit 1
+          fi
+          echo "  .p8 header looks right."
+
           keychain initialize
 
           # --create is the whole point. It makes the App Store provisioning
