@@ -247,6 +247,14 @@ workflows:
           fi
           echo "Certificate private key decoded and looks like PKCS#1."
 
+          # Hand the CLI the decoded PEM through an environment variable.
+          # --certificate-key supports the @env: prefix but not @file: — it
+          # rejects the latter as "invalid string value" before ever opening
+          # the path. A separate name from CERTIFICATE_PRIVATE_KEY, which
+          # still holds the base64 that arrived from Codemagic.
+          export CERT_KEY_PEM
+          CERT_KEY_PEM="$(cat "$CERT_KEY_FILE")"
+
           # --certificate-key is not optional here, despite reading like it.
           # A distribution certificate is a public key signed by Apple; the
           # matching PRIVATE key never leaves your side, so Apple cannot
@@ -260,7 +268,7 @@ workflows:
           # out until you revoke some.
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
-            --certificate-key="@file:$CERT_KEY_FILE" \
+            --certificate-key="@env:CERT_KEY_PEM" \
             --create
 
           # No --certificate-key here: `keychain add-certificates` does not
