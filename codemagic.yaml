@@ -145,8 +145,10 @@ workflows:
           echo "=== Podfile as it stands ==="
           cat ios/App/Podfile
 
+          # No --verbose: `cap update` does not accept it and exits 1, which
+          # failed the very step the flag was added to make legible.
           echo "=== cap update (native deps, runs pod install) ==="
-          npx cap update ios --verbose
+          npx cap update ios
 
           echo "=== plugins Capacitor resolved ==="
           # Diagnostic only. Deliberately non-fatal: this must never be the
