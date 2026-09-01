@@ -244,10 +244,10 @@ workflows:
             --certificate-key="@env:CERTIFICATE_PRIVATE_KEY" \
             --create
 
-          # Pass the same key here: without it, the certificate fetched above
-          # cannot be written into the keychain, and the archive later fails
-          # for want of a signing identity.
-          keychain add-certificates --certificate-key="@env:CERTIFICATE_PRIVATE_KEY"
+          # No --certificate-key here: `keychain add-certificates` does not
+          # accept one. It picks up the .p12 that fetch-signing-files already
+          # wrote to the default certificates directory.
+          keychain add-certificates
 
           echo "=== provisioning profiles on disk ==="
           PROFILE_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"

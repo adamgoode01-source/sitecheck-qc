@@ -123,11 +123,17 @@ Cannot save Signing Certificates without certificate private key
 creates no provisioning profile, and still exits successfully — so the failure
 only appears much later as `"App" requires a provisioning profile`.
 
-Generate one once:
+Generate one once — **the `-traditional` flag matters**:
 
 ```bash
-openssl genrsa -out signing_key.pem 2048
+openssl genrsa -traditional -out signing_key.pem 2048
 ```
+
+OpenSSL 3 defaults to PKCS#8, which starts `-----BEGIN PRIVATE KEY-----`.
+Codemagic's CLI wants PKCS#1, which starts `-----BEGIN RSA PRIVATE KEY-----`,
+and rejects the other with a message that only says the value "is not valid" —
+the contents are masked in the log, so there is nothing to look at. Check the
+first line says **RSA** before pasting.
 
 Paste the whole file, `BEGIN`/`END` lines included, into
 `CERTIFICATE_PRIVATE_KEY`.
