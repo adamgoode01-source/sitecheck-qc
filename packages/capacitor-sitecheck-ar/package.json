@@ -4,7 +4,7 @@
   "description": "ARKit depth measurement plugin for LiDAR Site Check.",
   "license": "UNLICENSED",
   "private": true,
-  "main": "dist/plugin.js",
+  "//": "No `main`: this plugin is native-only. The app reaches it through registerPlugin('SiteCheckAR') from @capacitor/core, so there is no JS entry point to declare — and pointing at one that does not exist breaks plugin resolution.",
   "capacitor": {
     "ios": {
       "src": "ios"

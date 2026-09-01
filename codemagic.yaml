@@ -93,21 +93,46 @@ workflows:
       - name: Build web assets
         script: npm run build
 
-      - name: Generate and sync the iOS project
+      - name: Generate the iOS project
         script: |
+          # `cap add ios` ends by running pod install at Capacitor's default
+          # deployment target of 13.0. The ARKit pod requires 14.0, so that
+          # first pod install fails — expected, and not fatal. The Xcode
+          # project and Podfile it generated are what we actually need; the
+          # target gets raised in the next step and pods installed properly
+          # after that. Hence `|| true` rather than letting it abort.
+          npx cap add ios || echo "cap add reported an error (expected: pod install at the default 13.0 target)"
+
           if [ ! -d "ios/App" ]; then
-            npx cap add ios
+            echo "FATAL: cap add did not produce ios/App — this is a real failure, not the expected pod error."
+            exit 1
           fi
-          npx cap sync ios
+          echo "iOS project generated."
 
       - name: Raise the deployment target
         script: |
-          # The ARKit plugin needs 14.0; Capacitor generates 13.0. Without
-          # this, `pod install` fails to resolve and the error names the pod
-          # rather than the cause.
+          # Must happen between project generation and any pod install. The
+          # ARKit plugin's podspec requires 14.0 and Capacitor generates 13.0;
+          # CocoaPods reports that mismatch as an error naming the pod, which
+          # reads like the plugin is broken rather than the target being low.
           sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '$IOS_DEPLOYMENT_TARGET'/" ios/App/Podfile
           sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = $IOS_DEPLOYMENT_TARGET;/g" ios/App/App.xcodeproj/project.pbxproj
+
+          echo "--- Podfile platform line ---"
           grep -n "platform :ios" ios/App/Podfile
+
+      - name: Sync web assets and native dependencies
+        script: |
+          set -e
+          # Split from generation so a failure names which half broke.
+          # `cap sync` = copy (web assets) + update (native deps, pod install).
+          npx cap sync ios
+
+          echo "--- plugins Capacitor resolved ---"
+          # If capacitor-sitecheck-ar is absent here, the ARKit plugin will
+          # not be in the binary and the app will fail at runtime with
+          # "plugin not implemented" rather than at build time.
+          npx cap ls ios
 
       - name: Patch Info.plist
         script: |
@@ -153,10 +178,9 @@ workflows:
           cd ios/App
           agvtool new-version -all "$PROJECT_BUILD_NUMBER"
 
-      - name: Install pods
-        script: |
-          cd ios/App
-          pod install
+      # No separate `pod install` step: `cap sync ios` above already runs it,
+      # at the corrected deployment target. Running it twice only adds a way
+      # for the two to disagree.
 
       - name: Set up code signing
         script: |
