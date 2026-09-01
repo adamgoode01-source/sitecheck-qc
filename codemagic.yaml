@@ -124,15 +124,31 @@ workflows:
       - name: Sync web assets and native dependencies
         script: |
           set -e
-          # Split from generation so a failure names which half broke.
-          # `cap sync` = copy (web assets) + update (native deps, pod install).
-          npx cap sync ios
 
-          echo "--- plugins Capacitor resolved ---"
-          # If capacitor-sitecheck-ar is absent here, the ARKit plugin will
-          # not be in the binary and the app will fail at runtime with
-          # "plugin not implemented" rather than at build time.
-          npx cap ls ios
+          # The plugin is a `file:` dependency, so npm links it into
+          # node_modules. CocoaPods resolves the podspec through that link, and
+          # if the Swift sources are not visible here the pod builds empty and
+          # the app fails at runtime rather than at build time. Checked first
+          # because it is invisible in every later error message.
+          echo "=== plugin as seen through node_modules ==="
+          ls -la node_modules/capacitor-sitecheck-ar/ || echo "PLUGIN NOT LINKED INTO node_modules"
+          echo "--- Swift sources ---"
+          ls -la node_modules/capacitor-sitecheck-ar/ios/Sources/SiteCheckARPlugin/ \
+            || echo "SWIFT SOURCES NOT VISIBLE THROUGH node_modules"
+
+          echo "=== cap copy (web assets only, no pods) ==="
+          npx cap copy ios
+
+          echo "=== Podfile as it stands ==="
+          cat ios/App/Podfile
+
+          echo "=== cap update (native deps, runs pod install) ==="
+          npx cap update ios --verbose
+
+          echo "=== plugins Capacitor resolved ==="
+          # Diagnostic only. Deliberately non-fatal: this must never be the
+          # thing that fails a build that otherwise worked.
+          npx cap ls ios || true
 
       - name: Patch Info.plist
         script: |
