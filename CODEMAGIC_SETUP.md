@@ -99,14 +99,30 @@ variables have one place to get right instead of two.
 In Codemagic, open your app → **Environment variables** (on the app's settings
 page, alongside the build configuration).
 
-Create **four** variables, all in a group named exactly `appstore`:
+Create **four** variables, all in a group named exactly `appstore`, all marked
+**Secure**.
 
-| Variable name | Value | Secure |
-|---|---|---|
-| `APP_STORE_CONNECT_ISSUER_ID` | Issuer ID — 36-char UUID | yes |
-| `APP_STORE_CONNECT_KEY_IDENTIFIER` | Key ID — exactly 10 characters | yes |
-| `APP_STORE_CONNECT_PRIVATE_KEY` | **the entire contents** of the `.p8` file | yes |
-| `CERTIFICATE_PRIVATE_KEY` | contents of `signing_key_base64.txt` | yes |
+The right-hand column below says *where to copy each value from*. It is not
+the value — do not paste this text into Codemagic.
+
+| Variable name | Copy its value from |
+|---|---|
+| `APP_STORE_CONNECT_ISSUER_ID` | the `Issuer ID:` line above the key table, App Store Connect → Users and Access → Integrations → App Store Connect API |
+| `APP_STORE_CONNECT_KEY_IDENTIFIER` | the **Key ID** column of your key's row in that same table |
+| `APP_STORE_CONNECT_PRIVATE_KEY` | the whole `AuthKey_*.p8` file, opened in a text editor |
+| `CERTIFICATE_PRIVATE_KEY` | the whole `signing_key_base64.txt` file |
+
+Each value should look like this when pasted:
+
+| Variable | Looks like |
+|---|---|
+| `APP_STORE_CONNECT_ISSUER_ID` | `69a6de70-1a2b-3c4d-5e6f-7890abcdef12` |
+| `APP_STORE_CONNECT_KEY_IDENTIFIER` | `2X9R4HXF34` |
+| `APP_STORE_CONNECT_PRIVATE_KEY` | `-----BEGIN PRIVATE KEY-----` … several lines … `-----END PRIVATE KEY-----` |
+| `CERTIFICATE_PRIVATE_KEY` | one long line of base64, ~2,200 characters, no spaces |
+
+None of them contains a space or a bracket. The build rejects any that do,
+because that means descriptive text was pasted instead of a credential.
 
 ### The first two are easy to confuse
 

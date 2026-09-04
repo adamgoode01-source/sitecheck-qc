@@ -238,6 +238,20 @@ workflows:
           echo "  (a good key id is [XXXXXXXXXX]; a good issuer id is"
           echo "   [XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX])"
 
+          # Identifiers are alphanumeric with no spaces. Anything containing a
+          # space or a bracket is prose — usually a description copied out of
+          # a setup table instead of the value it was describing.
+          case "$APP_STORE_CONNECT_KEY_IDENTIFIER$APP_STORE_CONNECT_ISSUER_ID" in
+            *" "*|*"("*|*")"*)
+              echo "FATAL: one of the identifiers contains spaces or brackets."
+              echo "Apple's key id and issuer id are alphanumeric with no spaces,"
+              echo "so this is descriptive text rather than a credential — check"
+              echo "that the value pasted came from App Store Connect and not from"
+              echo "a table describing what to paste."
+              exit 1
+              ;;
+          esac
+
           if [ "$KEY_ID_LEN" -ne 10 ]; then
             echo "FATAL: APP_STORE_CONNECT_KEY_IDENTIFIER should be exactly 10 characters."
             if [ "$KEY_ID_LEN" -eq 18 ]; then
