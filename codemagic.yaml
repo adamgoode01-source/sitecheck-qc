@@ -352,17 +352,29 @@ workflows:
           # build log — CERT_KEY_PEM is created here, so Codemagic has no way
           # to know it is a secret and does not mask it. A failed build should
           # not burn a signing key.
-          if ! app-store-connect fetch-signing-files "$BUNDLE_ID" \
-                 --type IOS_APP_STORE \
-                 --certificate-key="@env:CERT_KEY_PEM" \
-                 --create > "$CM_BUILD_DIR/asc.log" 2>&1; then
-            echo "fetch-signing-files failed. Output, with any key material removed:"
-            sed -e '/BEGIN [A-Z ]*PRIVATE KEY/,/END [A-Z ]*PRIVATE KEY/d' \
-                "$CM_BUILD_DIR/asc.log" | tail -30
-            rm -f "$CM_BUILD_DIR/asc.log" "$CERT_KEY_FILE"
+          PROFILE_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PROFILE_DIR"
+
+          FETCH_STATUS=0
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --certificate-key="@env:CERT_KEY_PEM" \
+            --profiles-dir "$PROFILE_DIR" \
+            --create > "$CM_BUILD_DIR/asc.log" 2>&1 || FETCH_STATUS=$?
+
+          # Printed on success too. It exited 0 while creating a certificate
+          # and no profile, and suppressing the output on success hid the only
+          # explanation for that.
+          echo "=== fetch-signing-files output (key material removed) ==="
+          sed -e '/BEGIN [A-Z ]*PRIVATE KEY/,/END [A-Z ]*PRIVATE KEY/d' \
+              "$CM_BUILD_DIR/asc.log" | tail -40
+          echo "=== exit status: $FETCH_STATUS ==="
+          rm -f "$CM_BUILD_DIR/asc.log"
+
+          if [ "$FETCH_STATUS" -ne 0 ]; then
+            rm -f "$CERT_KEY_FILE"
             exit 1
           fi
-          rm -f "$CM_BUILD_DIR/asc.log"
 
           # No --certificate-key here: `keychain add-certificates` does not
           # accept one. It picks up the .p12 that fetch-signing-files already
@@ -370,12 +382,26 @@ workflows:
           keychain add-certificates
 
           echo "=== provisioning profiles on disk ==="
-          PROFILE_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
           ls -la "$PROFILE_DIR" 2>/dev/null || echo "(no profile directory)"
+
           if [ -z "$(ls -A "$PROFILE_DIR" 2>/dev/null)" ]; then
-            echo "FATAL: fetch-signing-files produced no provisioning profile."
-            echo "Nothing later can sign, so stopping here rather than failing"
-            echo "twenty minutes into an archive."
+            # Look wider before concluding it made none — a profile written
+            # somewhere unexpected is a different problem from one never
+            # created, and the fix differs.
+            echo "--- searching for any .mobileprovision under ~/Library ---"
+            find "$HOME/Library" -name "*.mobileprovision" 2>/dev/null | head -10 \
+              || echo "(none anywhere)"
+
+            echo
+            echo "FATAL: no provisioning profile was produced."
+            echo
+            echo "A distribution certificate was created, so the credentials are"
+            echo "fine. A profile needs the bundle id to already exist in the"
+            echo "Developer portal — --create makes certificates and profiles,"
+            echo "but never bundle ids. Confirm $BUNDLE_ID is registered under"
+            echo "Certificates, Identifiers & Profiles > Identifiers, spelled"
+            echo "exactly, and that it belongs to the same team as the issuer id."
+            echo "The fetch output above says what it actually found."
             exit 1
           fi
 
