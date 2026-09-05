@@ -15,11 +15,15 @@ and issue a report — entirely offline.
 | Production build (`npm run build`) | ✅ builds, pdf.js worker emits correctly |
 | Runs in a browser | ✅ verified — projects, inspections, capture setup, reports |
 | Windows Electron shell | ⚠️ written, never launched |
-| iOS / ARKit | ❌ never compiled — needs a Mac |
+| iOS build | ✅ compiles, archives, ships to TestFlight via Codemagic |
+| ARKit plugin **at runtime** | ❌ compiled, but never executed on a device |
 | Measured against a real tape | ❌ **not done, and this is the one that matters** |
 
-The domain core is verified. The platform shells are not, and no measurement
-this app produces has ever been compared against a tape. See
+The domain core is verified and the iOS app now builds. Compiling is not
+running, though: the ARKit plugin has never executed, so whether
+`registerPlugin('SiteCheckAR')` actually finds it, and whether a tap returns a
+sane 3D point, are both still open. And no measurement this app produces has
+ever been compared against a tape. See
 [What to verify first](#what-to-verify-first).
 
 ---

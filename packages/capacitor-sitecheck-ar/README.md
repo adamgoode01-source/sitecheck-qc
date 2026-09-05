@@ -89,9 +89,22 @@ Each point carries a confidence:
 Whether that flag actually predicts error is a real open question, and the
 app's calibration mode measures it. See `CALIBRATION.md`.
 
-## Never compiled
+## Compiles, but has never run
 
-Written against the Capacitor 6 and ARKit APIs, never built. Likely friction:
+It builds and archives under Xcode 26 through Codemagic, so the Swift is
+syntactically and type-wise sound against the real SDK. That is less than it
+sounds:
+
+- **Plugin registration is a runtime lookup.** `registerPlugin('SiteCheckAR')`
+  matches `@objc(SiteCheckARPlugin)` by string at launch. A mismatch compiles
+  perfectly and fails on the device with "plugin not implemented".
+- **The AR session has never started.** Raycasting, confidence classification
+  and the phase flow are all unexercised.
+- **`NSCameraUsageDescription` has never been tested.** If the plist patch did
+  not take, the system kills the app the instant the session starts, with no
+  error JavaScript can catch.
+
+First run on a device is the real test. Historical friction, now resolved:
 
 - **Method registration.** `CAPBridgedPlugin` with a `pluginMethods` array is
   the Capacitor 6 style. On Capacitor 5 or earlier, drop the protocol and use
